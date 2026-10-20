@@ -1,6 +1,6 @@
 # 0001 Mock REST data served from public/api
 
-Date: 2026-10-19 · Status: accepted
+Date: 2026-10-19 · Status: superseded by [0005](0005-backend-cookie-session.md)
 
 ## Context
 

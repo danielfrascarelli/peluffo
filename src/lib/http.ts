@@ -1,12 +1,37 @@
 import type { z } from "zod";
 
-// Without VITE_API_URL the app reads the static mock files in public/api/<resource>.json.
-// Point VITE_API_URL at the backend and the same paths become REST endpoints.
-const API_URL = import.meta.env.VITE_API_URL;
-const resourceUrl = (path: string): string => (API_URL ? `${API_URL}/${path}` : `/api/${path}.json`);
+// Same-site backend; the Vite dev server proxies /api/v1 to it (vite.config.ts).
+// Auth lives in httpOnly cookies the browser sends on its own: no token ever touches this code.
+const API_URL = import.meta.env.VITE_API_URL || "/api/v1";
+
+let onSessionExpired = (): void => {};
+export function setSessionExpiredHandler(handler: () => void): void {
+  onSessionExpired = handler;
+}
+
+export const send = (path: string, init?: RequestInit): Promise<Response> =>
+  fetch(`${API_URL}/${path}`, { credentials: "include", ...init });
+
+// One refresh in flight per tab: the backend revokes the session if an old refresh token is replayed.
+let refreshing: Promise<boolean> | null = null;
+function refreshSession(): Promise<boolean> {
+  refreshing ??= send("auth/refresh", { method: "POST" })
+    .then((res) => res.ok)
+    .finally(() => (refreshing = null));
+  return refreshing;
+}
+
+// Retries once after renewing an expired access cookie; a failed renewal ends the session.
+export async function authedFetch(path: string): Promise<Response> {
+  const res = await send(path);
+  if (res.status !== 401) return res;
+  if (await refreshSession()) return send(path);
+  onSessionExpired();
+  return res;
+}
 
 export async function getJson<T>(path: string, schema: z.ZodType<T>): Promise<T> {
-  const res = await fetch(resourceUrl(path));
+  const res = await authedFetch(path);
   if (!res.ok) throw new Error(`GET ${path} failed: ${res.status}`);
   return schema.parse(await res.json());
 }
