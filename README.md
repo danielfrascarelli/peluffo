@@ -5,12 +5,12 @@ Internal tool for Peluffo, Colibrí and Fibras staff to coordinate mental-health
 - Build tool: Vite 6
 - Rendering: client-only SPA (no SSR)
 - React: 18
-- Node: 22 (`.nvmrc`), pnpm (`packageManager`)
+- Node: 24 (`.nvmrc`), pnpm (`packageManager`)
 
 ## Development
 
 ```sh
-nvm use                       # Node 22
+nvm use                       # Node 24
 git submodule update --init   # engineering standards in .standards/
 pnpm install
 pnpm hooks:install            # git hooks, once per clone

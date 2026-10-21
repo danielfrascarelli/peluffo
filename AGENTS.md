@@ -4,13 +4,13 @@ Central standards apply first. See .standards/README.md for read order and prece
 
 Project facts:
 
-- Runtime: Node.js 22 (browser app, client-only SPA, React 18, built with Vite)
+- Runtime: Node.js 24 (browser app, client-only SPA, React 18, built with Vite)
 - Package manager: pnpm
 - Test runner: Vitest
 - Deployment target: static hosting (TBD)
 - Backend: `../backend` (NestJS) serves all data and auth at `/api/v1`, same site. Session is httpOnly cookies; see docs/decisions/0005.
 - Language: product copy in Spanish (rioplatense voseo, gender-neutral wording, sentence case). Code, comments, docs and commits in English.
-- Local Node: default nvm Node on this machine is 20 (EOL); run `nvm use` (reads `.nvmrc`) before any pnpm command.
+- Local Node: run `nvm use` (reads `.nvmrc`) before any pnpm command.
 
 Product rules (decided with the owner; change only with a new decision record):
 
