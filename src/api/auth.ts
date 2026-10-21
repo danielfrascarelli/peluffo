@@ -1,14 +1,26 @@
-import { z } from "zod";
-import { getJson } from "@/lib/http";
+import { authedFetch, send } from "@/lib/http";
 import { userSchema, type User } from "@/lib/schemas";
 
-const mockUserSchema = userSchema.extend({ password: z.string() });
-
-// ponytail: mock login compares against public/api/users.json in the browser.
-// Replace with POST /auth/login on the backend; passwords must never ship to the client.
+// The backend sets httpOnly session cookies on success. null means wrong credentials.
 export async function login(username: string, password: string): Promise<User | null> {
-  const users = await getJson("users", z.array(mockUserSchema));
-  const match = users.find((u) => u.username === username && u.password === password);
-  // userSchema strips unknown keys, so the password never leaves this function.
-  return match ? userSchema.parse(match) : null;
+  const res = await send("auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  if (res.status === 401) return null;
+  if (!res.ok) throw new Error(`login failed: ${res.status}`);
+  return userSchema.parse(await res.json());
+}
+
+// Restores the session after a reload. null means nobody is logged in.
+export async function fetchCurrentUser(): Promise<User | null> {
+  const res = await authedFetch("auth/me");
+  if (res.status === 401) return null;
+  if (!res.ok) throw new Error(`GET auth/me failed: ${res.status}`);
+  return userSchema.parse(await res.json());
+}
+
+export async function logout(): Promise<void> {
+  await send("auth/logout", { method: "POST" });
 }

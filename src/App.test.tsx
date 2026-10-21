@@ -1,12 +1,13 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "@/App";
+import { login } from "@/api/auth";
 import { renderWithProviders, stubApi } from "@/test/renderWithProviders";
 
 async function logIn(username: string, password: string): Promise<ReturnType<typeof userEvent.setup>> {
   const user = userEvent.setup();
   renderWithProviders(<App />);
-  await user.type(screen.getByLabelText("Usuario"), username);
+  await user.type(await screen.findByLabelText("Usuario"), username);
   await user.type(screen.getByLabelText("Contraseña"), password);
   await user.click(screen.getByRole("button", { name: "Ingresar" }));
   return user;
@@ -50,7 +51,14 @@ describe("App", () => {
 
     await user.click(screen.getByRole("button", { name: "Cuenta de Laura Fibras" }));
     await user.click(screen.getByRole("menuitem", { name: "Cerrar sesión" }));
-    expect(screen.getByLabelText("Usuario")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Usuario")).toBeInTheDocument();
+  });
+
+  it("restores an existing session on load without asking to log in", async () => {
+    await login("fibras", "fibras");
+    renderWithProviders(<App />);
+    expect(await screen.findByRole("button", { name: "Cuenta de Laura Fibras" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Usuario")).not.toBeInTheDocument();
   });
 
   it("shows patients only by initials and psychologists as Apellido, Nombre", async () => {

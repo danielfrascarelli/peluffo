@@ -6,7 +6,6 @@ import ListItem from "@/components/shared/ListItem";
 import Modal from "@/components/shared/Modal";
 import ModalHeader from "@/components/shared/ModalHeader";
 import PersonDetail from "@/components/patients/PersonDetail";
-import SearchInput from "@/components/shared/SearchInput";
 import { usePatientRecords, usePsychologists } from "@/hooks/queries";
 import { formatDate } from "@/lib/format";
 import { PATIENT_STATUS, REQUEST_FOR_LABEL } from "@/lib/labels";
@@ -28,7 +27,6 @@ const lastProfessionalId = (p: PatientRecord): string | null =>
   p.current?.psychologistId ?? (p.status === "finalizado" ? (p.history.at(-1)?.psychologistId ?? null) : null);
 
 export default function Patients(): React.JSX.Element {
-  const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("todos");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { data: patients = [], isPending: patientsPending } = usePatientRecords();
@@ -39,12 +37,7 @@ export default function Patients(): React.JSX.Element {
   const psycMap = Object.fromEntries(psychologists.map((p) => [p.id, lastFirst(p)]));
   const psychNameOf = (id: string | null) => (id ? psycMap[id] : undefined);
 
-  const q = search.toLowerCase();
-
-  const filtered = patients
-    .filter((p) => status === "todos" || p.status === status)
-    .filter((p) => initials(p).toLowerCase().includes(q) || (p.cedula ?? "").includes(q))
-    .sort(byLastName);
+  const filtered = patients.filter((p) => status === "todos" || p.status === status).sort(byLastName);
 
   const selected = patients.find((p) => p.id === selectedId);
   const nameOf = (p: PatientRecord) => initials(p);
@@ -52,12 +45,6 @@ export default function Patients(): React.JSX.Element {
   return (
     <div>
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center mb-5">
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Buscar por iniciales o cédula..."
-          className="sm:max-w-sm w-full"
-        />
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrar por estado">
           {STATUS_FILTERS.map((f) => (
             <button
@@ -81,9 +68,7 @@ export default function Patients(): React.JSX.Element {
 
       {filtered.length === 0 && (
         <div className="bg-card rounded-xl border border-border py-10 text-center text-sm text-muted-foreground">
-          {search
-            ? `No hay pacientes que coincidan con «${search}». Probá con otro nombre.`
-            : "No hay pacientes con ese estado."}
+          No hay pacientes con ese estado.
         </div>
       )}
 
